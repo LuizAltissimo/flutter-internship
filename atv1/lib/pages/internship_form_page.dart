@@ -13,7 +13,7 @@ class InternshipFormPage extends StatefulWidget {
 
 class _InternshipFormPageState extends State<InternshipFormPage> {
   final _formKey = GlobalKey<FormState>();
-  final _controller = sqlInternshipController();
+  final _controller = sql_internship_controller();
   final _studentNameController = TextEditingController();
   final _companyNameController = TextEditingController();
   final _locationController = TextEditingController();

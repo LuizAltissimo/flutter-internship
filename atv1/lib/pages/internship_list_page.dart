@@ -11,7 +11,7 @@ class InternshipListPage extends StatefulWidget {
 }
 
 class _InternshipListPageState extends State<InternshipListPage> {
-  final sqlInternshipController _controller = sqlInternshipController();
+  final sql_internship_controller _controller = sql_internship_controller();
   final TextEditingController _searchController = TextEditingController();
   late Future<List<internship>> _internshipsFuture;
   String _searchTerm = '';

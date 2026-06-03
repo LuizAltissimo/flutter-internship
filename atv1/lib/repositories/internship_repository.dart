@@ -12,10 +12,10 @@ abstract class InternshipRepository {
 }
 
 class internship_data_source implements InternshipRepository {
-  final AppDatabase _database;
+  final app_database _database;
   static const String tableName = 'internships';
 
-  internship_data_source({AppDatabase? database}) : _database = database ?? AppDatabase.instance;
+  internship_data_source({app_database? database}) : _database = database ?? app_database.instance;
 
   @override
   Future<int> insert_internship(internship internship) async {

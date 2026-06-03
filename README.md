@@ -1,131 +1,121 @@
-# atv1
+# Controle de Estagios
 
-## Descrição do projeto
+Aplicativo Flutter para cadastro e acompanhamento de estagios. O projeto permite registrar estudantes, empresas, locais e duracoes, mantendo os dados salvos localmente em SQLite.
 
-`atv1` é um aplicativo Flutter para controle de estágios que permite cadastrar, listar, editar e excluir registros de estágios. O app usa um banco de dados local SQLite (`sqflite`) para persistir dados do usuário no dispositivo.
+O app foi criado como um prototipo funcional com foco em CRUD, persistencia local e uma interface simples para consulta rapida dos registros.
 
-O aplicativo foi desenvolvido com foco em simplicidade, usabilidade e arquitetura modular, separando as responsabilidades de interface, controle, repositório e persistência.
+## Funcionalidades
 
-## Funcionalidades principais
+- Cadastrar novos estagios.
+- Listar todos os registros cadastrados.
+- Buscar por estudante, empresa, local ou duracao.
+- Visualizar um resumo com total de estagios, empresas e locais.
+- Editar informacoes de um estagio existente.
+- Excluir registros com confirmacao.
+- Atualizar a lista manualmente pelo botao de refresh ou pelo gesto de puxar para atualizar.
+- Validar campos obrigatorios antes de salvar.
+- Persistir dados no dispositivo usando SQLite.
 
-- Cadastro de novos estágios
-- Edição de estágios existentes
-- Exclusão de estágios com confirmação
-- Lista de estágios consultável com atualização manual
-- Persistência local com SQLite
-- Validação de campos obrigatórios no formulário
+## Tecnologias utilizadas
 
-## Arquitetura e organização do código
+- Flutter
+- Dart
+- SQLite com `sqflite`
+- `path` para montagem do caminho do banco local
+- Material 3 para tema e componentes de interface
 
-O app segue uma estrutura organizada em camadas:
+## Estrutura do projeto
 
-- `lib/main.dart`
-  - Ponto de entrada do aplicativo
-  - Configura `MaterialApp` com tema e rota inicial
+```text
+atv1/
+  lib/
+    main.dart
+    controllers/
+      internship_controller.dart
+    database/
+      app_database.dart
+    models/
+      internship_model.dart
+    pages/
+      internship_form_page.dart
+      internship_list_page.dart
+    repositories/
+      internship_repository.dart
+```
 
-- `lib/pages/`
-  - `internship_list_page.dart`
-    - Exibe a lista de estágios
-    - Permite atualizar, editar e excluir registros
-  - `internship_form_page.dart`
-    - Formulário para criação e edição de estágios
-    - Valida campos obrigatórios antes de salvar
+## Organizacao do codigo
 
-- `lib/controllers/`
-  - `internship_controller.dart`
-    - Controlador que implementa a interface de repositório
-    - Encaminha operações para a camada de dados
-
-- `lib/repositories/`
-  - `internship_repository.dart`
-    - Define interface de repositório com métodos CRUD
-    - Implementa `internship_data_source` usando `sqflite`
-
-- `lib/database/`
-  - `app_database.dart`
-    - Inicializa o banco de dados SQLite
-    - Cria a tabela `internships`
-    - Configura `PRAGMA foreign_keys = ON`
-
-- `lib/models/`
-  - `internship_model.dart`
-    - Define o modelo de dados `internship`
-    - Converte entre `Map<String, dynamic>` e objeto Dart
+- `main.dart`: ponto de entrada do aplicativo, configuracao do tema e tela inicial.
+- `pages/internship_list_page.dart`: tela principal com listagem, busca, resumo, atualizacao, edicao e exclusao.
+- `pages/internship_form_page.dart`: formulario usado para cadastrar e editar estagios.
+- `models/internship_model.dart`: modelo de dados do estagio e conversao para `Map`.
+- `controllers/internship_controller.dart`: camada intermediaria entre interface e repositorio.
+- `repositories/internship_repository.dart`: contrato CRUD e implementacao de acesso aos dados.
+- `database/app_database.dart`: inicializacao do banco SQLite e criacao da tabela `internships`.
 
 ## Modelo de dados
 
-O app armazena estágios na tabela SQLite `internships` com as seguintes colunas:
+A tabela `internships` armazena os seguintes campos:
 
-- `internship_id`: INTEGER PRIMARY KEY AUTOINCREMENT
-- `student_name`: TEXT NOT NULL
-- `company_name`: TEXT NOT NULL
-- `location`: TEXT NOT NULL
-- `duration`: TEXT NOT NULL
-
-## Fluxo do aplicativo
-
-1. O app inicia em `lib/main.dart` e exibe `InternshipListPage`.
-2. `InternshipListPage` carrega a lista de estágios via `sqlInternshipController.get_internships()`.
-3. O usuário pode:
-   - Adicionar um novo estágio usando o botão `Adicionar`
-   - Editar um estágio existente tocando no ícone de edição
-   - Excluir um estágio usando o ícone de exclusão
-4. Ao abrir o formulário, `InternshipFormPage` preenche os campos se estiver editando um registro existente.
-5. O formulário valida cada campo obrigatório antes de salvar.
-6. O controlador persiste a operação no banco de dados SQLite e retorna à lista atualizada.
-
-## Dependências
-
-As dependências principais do projeto são:
-
-- `flutter`
-- `cupertino_icons`
-- `sqflite`
-- `path`
-
-As dependências de desenvolvimento incluem:
-
-- `flutter_test`
-- `flutter_lints`
+| Campo | Tipo | Descricao |
+| --- | --- | --- |
+| `internship_id` | `INTEGER` | Identificador automatico do registro |
+| `student_name` | `TEXT` | Nome do estudante |
+| `company_name` | `TEXT` | Nome da empresa |
+| `location` | `TEXT` | Localizacao do estagio |
+| `duration` | `TEXT` | Duracao do estagio |
 
 ## Como executar
 
-1. Abra o terminal no diretório do projeto:
-   - `c:\Util\flutter\atv1`
-2. Instale as dependências:
-   - `flutter pub get`
-3. Execute o app em um dispositivo ou emulador:
-   - `flutter run`
-4. Se quiser direcionar para um dispositivo específico:
-   - `flutter devices`
-   - `flutter run -d <device-id>`
+Entre na pasta do app:
 
-## Estrutura de pastas relevante
+```powershell
+cd "c:\Util\App estagio\atv1"
+```
 
-- `android/` - código e configuração Android
-- `lib/` - código Dart do aplicativo
-- `lib/pages/` - telas de interface
-- `lib/controllers/` - lógica de controle / orquestração
-- `lib/repositories/` - repositório de dados e operações CRUD
-- `lib/database/` - inicialização e configuração do banco SQLite
-- `lib/models/` - modelos de dados
-- `web/` - arquivos de configuração e assets para web
+Instale as dependencias:
 
-## Possíveis melhorias futuras
+```powershell
+flutter pub get
+```
 
-- Adicionar pesquisa e filtros na lista de estágios
-- Separar mais claramente a camada de serviço e apresentação
-- Suporte a importação/exportação de dados
-- Internacionalização (i18n) e suporte a múltiplos idiomas
-- Validação mais avançada de campos (datas, duração numérica, etc.)
-- Testes automatizados de unidade e widget
+Execute o aplicativo:
 
-## Observações
+```powershell
+flutter run
+```
 
-- O projeto está configurado para não ser publicado (`publish_to: 'none'`).
-- O banco de dados é gerenciado localmente e salvo no dispositivo do usuário.
-- A interface usa `Material 3` através do `ThemeData` e `ColorScheme.fromSeed`.
+Para escolher um dispositivo especifico:
 
----
+```powershell
+flutter devices
+flutter run -d <device-id>
+```
 
-`atv1` é um app de protótipo funcional para controle de estágios que combina persistência local com uma interface simples e prática.
+## Fluxo de uso
+
+1. A tela inicial exibe os estagios cadastrados.
+2. O botao `Adicionar` abre o formulario de cadastro.
+3. Ao salvar, o registro e gravado no banco local e a lista e atualizada.
+4. Cada item da lista pode ser editado ou excluido.
+5. A busca filtra os registros pelo texto digitado.
+
+## Banco de dados
+
+O banco local se chama `internships.db`. Na primeira execucao, o app cria a tabela `internships` automaticamente com os campos definidos no modelo.
+
+A persistencia e local, portanto os dados ficam armazenados no dispositivo em que o app esta sendo executado.
+
+## Possiveis melhorias
+
+- Adicionar datas de inicio e fim do estagio.
+- Validar duracao e datas com regras mais especificas.
+- Criar filtros por empresa ou local.
+- Ordenar registros por estudante, empresa ou duracao.
+- Adicionar exportacao de dados.
+- Criar testes automatizados para modelo, repositorio e telas.
+- Ajustar nomes de classes para seguir a convencao Dart (`PascalCase` para classes).
+
+## Status
+
+Projeto em desenvolvimento, com CRUD funcional e persistencia local implementada.

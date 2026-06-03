@@ -12,12 +12,23 @@ class InternshipListPage extends StatefulWidget {
 
 class _InternshipListPageState extends State<InternshipListPage> {
   final sqlInternshipController _controller = sqlInternshipController();
+  final TextEditingController _searchController = TextEditingController();
   late Future<List<internship>> _internshipsFuture;
+  String _searchTerm = '';
 
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(() {
+      setState(() => _searchTerm = _searchController.text.trim());
+    });
     _loadInternships();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   void _loadInternships() {
@@ -52,10 +63,13 @@ class _InternshipListPageState extends State<InternshipListPage> {
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (context) {
+        final colorScheme = Theme.of(context).colorScheme;
+
         return AlertDialog(
-          title: const Text('Excluir estagio'),
+          icon: Icon(Icons.delete_outline, color: colorScheme.error),
+          title: const Text('Excluir estagio?'),
           content: Text(
-            'Deseja excluir o estagio de ${selectedInternship.student_name}?',
+            'O registro de ${selectedInternship.student_name} sera removido permanentemente.',
           ),
           actions: [
             TextButton(
@@ -63,6 +77,10 @@ class _InternshipListPageState extends State<InternshipListPage> {
               child: const Text('Cancelar'),
             ),
             FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: colorScheme.error,
+                foregroundColor: colorScheme.onError,
+              ),
               onPressed: () => Navigator.of(context).pop(true),
               child: const Text('Excluir'),
             ),
@@ -110,65 +128,76 @@ class _InternshipListPageState extends State<InternshipListPage> {
               icon: Icons.error_outline,
               title: 'Erro ao carregar estagios',
               message: snapshot.error.toString(),
+              actionLabel: 'Tentar novamente',
+              onAction: _refreshInternships,
             );
           }
 
           final internships = snapshot.data ?? [];
           if (internships.isEmpty) {
-            return const _InternshipMessage(
+            return _InternshipMessage(
               icon: Icons.work_outline,
               title: 'Nenhum estagio cadastrado',
-              message: 'Toque em adicionar para criar o primeiro registro.',
+              message:
+                  'Cadastre um estagio para acompanhar estudantes, empresas e duracao em um so lugar.',
+              actionLabel: 'Adicionar estagio',
+              onAction: () => _openForm(),
             );
           }
 
+          final visibleInternships = internships.where((item) {
+            final normalizedSearch = _searchTerm.toLowerCase();
+            if (normalizedSearch.isEmpty) return true;
+
+            return item.student_name.toLowerCase().contains(normalizedSearch) ||
+                item.company_name.toLowerCase().contains(normalizedSearch) ||
+                item.location.toLowerCase().contains(normalizedSearch) ||
+                item.duration.toLowerCase().contains(normalizedSearch);
+          }).toList();
+
           return RefreshIndicator(
             onRefresh: _refreshInternships,
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: internships.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final item = internships[index];
-
-                return Card(
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      child: Text(
-                        item.student_name.trim().isEmpty
-                            ? '?'
-                            : item.student_name.trim()[0].toUpperCase(),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+              children: [
+                _InternshipOverview(internships: internships),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Buscar por estudante, empresa ou local',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _searchTerm.isEmpty
+                        ? null
+                        : IconButton(
+                            tooltip: 'Limpar busca',
+                            onPressed: _searchController.clear,
+                            icon: const Icon(Icons.close),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (visibleInternships.isEmpty)
+                  _InternshipMessage(
+                    icon: Icons.search_off_outlined,
+                    title: 'Nenhum resultado encontrado',
+                    message:
+                        'Revise o termo pesquisado para localizar o registro.',
+                    actionLabel: 'Limpar busca',
+                    onAction: _searchController.clear,
+                  )
+                else
+                  ...visibleInternships.map(
+                    (item) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _InternshipCard(
+                        internshipItem: item,
+                        onEdit: () => _openForm(selectedInternship: item),
+                        onDelete: () => _confirmDelete(item),
                       ),
-                    ),
-                    title: Text(item.student_name),
-                    subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(item.company_name),
-                          Text('${item.location} - ${item.duration}'),
-                        ],
-                      ),
-                    ),
-                    trailing: Wrap(
-                      spacing: 4,
-                      children: [
-                        IconButton(
-                          tooltip: 'Editar',
-                          onPressed: () => _openForm(selectedInternship: item),
-                          icon: const Icon(Icons.edit_outlined),
-                        ),
-                        IconButton(
-                          tooltip: 'Excluir',
-                          onPressed: () => _confirmDelete(item),
-                          icon: const Icon(Icons.delete_outline),
-                        ),
-                      ],
                     ),
                   ),
-                );
-              },
+              ],
             ),
           );
         },
@@ -182,15 +211,282 @@ class _InternshipListPageState extends State<InternshipListPage> {
   }
 }
 
+class _InternshipOverview extends StatelessWidget {
+  final List<internship> internships;
+
+  const _InternshipOverview({required this.internships});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final companyCount = internships
+        .map((item) => item.company_name.trim())
+        .where((company) => company.isNotEmpty)
+        .toSet()
+        .length;
+    final locationCount = internships
+        .map((item) => item.location.trim())
+        .where((location) => location.isNotEmpty)
+        .toSet()
+        .length;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: colorScheme.primary,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: colorScheme.secondary,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.assignment_turned_in_outlined,
+                  color: colorScheme.onSecondary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Controle de Estagios',
+                      style: textTheme.titleLarge?.copyWith(
+                        color: colorScheme.onPrimary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Visao geral dos registros cadastrados',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onPrimary.withValues(alpha: 0.78),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: _OverviewMetric(
+                  label: 'Estagios',
+                  value: internships.length.toString(),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _OverviewMetric(
+                  label: 'Empresas',
+                  value: companyCount.toString(),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _OverviewMetric(
+                  label: 'Locais',
+                  value: locationCount.toString(),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OverviewMetric extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _OverviewMetric({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      constraints: const BoxConstraints(minHeight: 76),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colorScheme.onPrimary.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: colorScheme.onPrimary.withValues(alpha: 0.18),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            value,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: colorScheme.onPrimary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: colorScheme.onPrimary.withValues(alpha: 0.76),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InternshipCard extends StatelessWidget {
+  final internship internshipItem;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  const _InternshipCard({
+    required this.internshipItem,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final studentName = internshipItem.student_name.trim();
+    final initial = studentName.isEmpty ? '?' : studentName[0].toUpperCase();
+
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: colorScheme.secondaryContainer,
+              foregroundColor: colorScheme.onSecondaryContainer,
+              child: Text(
+                initial,
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    internshipItem.student_name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  _InfoLine(
+                    icon: Icons.business_outlined,
+                    text: internshipItem.company_name,
+                  ),
+                  const SizedBox(height: 4),
+                  _InfoLine(
+                    icon: Icons.location_on_outlined,
+                    text: internshipItem.location,
+                  ),
+                  const SizedBox(height: 4),
+                  _InfoLine(
+                    icon: Icons.schedule_outlined,
+                    text: internshipItem.duration,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  tooltip: 'Editar',
+                  onPressed: onEdit,
+                  icon: const Icon(Icons.edit_outlined),
+                ),
+                IconButton(
+                  tooltip: 'Excluir',
+                  onPressed: onDelete,
+                  icon: Icon(Icons.delete_outline, color: colorScheme.error),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoLine extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _InfoLine({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Row(
+      children: [
+        Icon(icon, size: 17, color: colorScheme.onSurfaceVariant),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _InternshipMessage extends StatelessWidget {
   final IconData icon;
   final String title;
   final String message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   const _InternshipMessage({
     required this.icon,
     required this.title,
     required this.message,
+    this.actionLabel,
+    this.onAction,
   });
 
   @override
@@ -216,6 +512,14 @@ class _InternshipMessage extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: 18),
+              FilledButton.icon(
+                onPressed: onAction,
+                icon: const Icon(Icons.arrow_forward),
+                label: Text(actionLabel!),
+              ),
+            ],
           ],
         ),
       ),

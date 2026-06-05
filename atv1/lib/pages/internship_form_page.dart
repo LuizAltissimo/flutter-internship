@@ -3,7 +3,7 @@ import 'package:atv1/models/internship_model.dart';
 import 'package:flutter/material.dart';
 
 class InternshipFormPage extends StatefulWidget {
-  final internship? internshipToEdit;
+  final Internship? internshipToEdit;
 
   const InternshipFormPage({super.key, this.internshipToEdit});
 
@@ -13,7 +13,7 @@ class InternshipFormPage extends StatefulWidget {
 
 class _InternshipFormPageState extends State<InternshipFormPage> {
   final _formKey = GlobalKey<FormState>();
-  final _controller = sql_internship_controller();
+  final _controller = SqlInternshipController();
   final _studentNameController = TextEditingController();
   final _companyNameController = TextEditingController();
   final _locationController = TextEditingController();
@@ -29,8 +29,8 @@ class _InternshipFormPageState extends State<InternshipFormPage> {
 
     final internshipToEdit = widget.internshipToEdit;
     if (internshipToEdit != null) {
-      _studentNameController.text = internshipToEdit.student_name;
-      _companyNameController.text = internshipToEdit.company_name;
+      _studentNameController.text = internshipToEdit.studentName;
+      _companyNameController.text = internshipToEdit.companyName;
       _locationController.text = internshipToEdit.location;
       _durationController.text = internshipToEdit.duration;
     }
@@ -51,19 +51,19 @@ class _InternshipFormPageState extends State<InternshipFormPage> {
 
     setState(() => _isSaving = true);
 
-    final newInternship = internship(
-      internship_id: widget.internshipToEdit?.internship_id,
-      student_name: _studentNameController.text.trim(),
-      company_name: _companyNameController.text.trim(),
+    final newInternship = Internship(
+      internshipId: widget.internshipToEdit?.internshipId,
+      studentName: _studentNameController.text.trim(),
+      companyName: _companyNameController.text.trim(),
       location: _locationController.text.trim(),
       duration: _durationController.text.trim(),
     );
 
     try {
       if (_isEditing) {
-        await _controller.update_internship(newInternship);
+        await _controller.updateInternship(newInternship);
       } else {
-        await _controller.insert_internship(newInternship);
+        await _controller.insertInternship(newInternship);
       }
 
       if (!mounted) return;

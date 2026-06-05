@@ -1,28 +1,29 @@
 import 'package:atv1/models/internship_model.dart';
 import 'package:atv1/repositories/internship_repository.dart';
 
-class sql_internship_controller implements InternshipRepository {
-  final internship_data_source _repository;
+class SqlInternshipController implements InternshipRepository {
+  final InternshipDataSource _repository;
 
-  sql_internship_controller({internship_data_source? repository}) : _repository = repository ?? internship_data_source();
+  SqlInternshipController({InternshipDataSource? repository})
+    : _repository = repository ?? InternshipDataSource();
 
   @override
-  Future<int> insert_internship(internship internship) async {
-    return await _repository.insert_internship(internship);
+  Future<int> insertInternship(Internship internship) async {
+    return await _repository.insertInternship(internship);
   }
 
   @override
-  Future<List<internship>> get_internships() async {
-    return await _repository.get_internships();
-  }
-  
-  @override
-  Future<int> update_internship(internship internship) async {
-    return await _repository.update_internship(internship);
+  Future<List<Internship>> getInternships() async {
+    return await _repository.getInternships();
   }
 
   @override
-  Future<int> delete_internship(int id) async {
-    return await _repository.delete_internship(id);
+  Future<int> updateInternship(Internship internship) async {
+    return await _repository.updateInternship(internship);
+  }
+
+  @override
+  Future<int> deleteInternship(int id) async {
+    return await _repository.deleteInternship(id);
   }
 }

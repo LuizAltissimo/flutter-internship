@@ -11,9 +11,9 @@ class InternshipListPage extends StatefulWidget {
 }
 
 class _InternshipListPageState extends State<InternshipListPage> {
-  final sql_internship_controller _controller = sql_internship_controller();
+  final SqlInternshipController _controller = SqlInternshipController();
   final TextEditingController _searchController = TextEditingController();
-  late Future<List<internship>> _internshipsFuture;
+  late Future<List<Internship>> _internshipsFuture;
   String _searchTerm = '';
 
   @override
@@ -32,7 +32,7 @@ class _InternshipListPageState extends State<InternshipListPage> {
   }
 
   void _loadInternships() {
-    _internshipsFuture = _controller.get_internships();
+    _internshipsFuture = _controller.getInternships();
   }
 
   Future<void> _refreshInternships() async {
@@ -40,7 +40,7 @@ class _InternshipListPageState extends State<InternshipListPage> {
     await _internshipsFuture;
   }
 
-  Future<void> _openForm({internship? selectedInternship}) async {
+  Future<void> _openForm({Internship? selectedInternship}) async {
     final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) =>
@@ -53,8 +53,8 @@ class _InternshipListPageState extends State<InternshipListPage> {
     }
   }
 
-  Future<void> _confirmDelete(internship selectedInternship) async {
-    final id = selectedInternship.internship_id;
+  Future<void> _confirmDelete(Internship selectedInternship) async {
+    final id = selectedInternship.internshipId;
     if (id == null) {
       _showMessage('Nao foi possivel excluir este estagio.');
       return;
@@ -69,7 +69,7 @@ class _InternshipListPageState extends State<InternshipListPage> {
           icon: Icon(Icons.delete_outline, color: colorScheme.error),
           title: const Text('Excluir estagio?'),
           content: Text(
-            'O registro de ${selectedInternship.student_name} sera removido permanentemente.',
+            'O registro de ${selectedInternship.studentName} sera removido permanentemente.',
           ),
           actions: [
             TextButton(
@@ -90,7 +90,7 @@ class _InternshipListPageState extends State<InternshipListPage> {
     );
 
     if (shouldDelete == true) {
-      await _controller.delete_internship(id);
+      await _controller.deleteInternship(id);
       if (!mounted) return;
       _showMessage('Estagio excluido.');
       _refreshInternships();
@@ -116,7 +116,7 @@ class _InternshipListPageState extends State<InternshipListPage> {
           ),
         ],
       ),
-      body: FutureBuilder<List<internship>>(
+      body: FutureBuilder<List<Internship>>(
         future: _internshipsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -149,8 +149,8 @@ class _InternshipListPageState extends State<InternshipListPage> {
             final normalizedSearch = _searchTerm.toLowerCase();
             if (normalizedSearch.isEmpty) return true;
 
-            return item.student_name.toLowerCase().contains(normalizedSearch) ||
-                item.company_name.toLowerCase().contains(normalizedSearch) ||
+            return item.studentName.toLowerCase().contains(normalizedSearch) ||
+                item.companyName.toLowerCase().contains(normalizedSearch) ||
                 item.location.toLowerCase().contains(normalizedSearch) ||
                 item.duration.toLowerCase().contains(normalizedSearch);
           }).toList();
@@ -212,7 +212,7 @@ class _InternshipListPageState extends State<InternshipListPage> {
 }
 
 class _InternshipOverview extends StatelessWidget {
-  final List<internship> internships;
+  final List<Internship> internships;
 
   const _InternshipOverview({required this.internships});
 
@@ -221,7 +221,7 @@ class _InternshipOverview extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final companyCount = internships
-        .map((item) => item.company_name.trim())
+        .map((item) => item.companyName.trim())
         .where((company) => company.isNotEmpty)
         .toSet()
         .length;
@@ -358,7 +358,7 @@ class _OverviewMetric extends StatelessWidget {
 }
 
 class _InternshipCard extends StatelessWidget {
-  final internship internshipItem;
+  final Internship internshipItem;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -372,7 +372,7 @@ class _InternshipCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final studentName = internshipItem.student_name.trim();
+    final studentName = internshipItem.studentName.trim();
     final initial = studentName.isEmpty ? '?' : studentName[0].toUpperCase();
 
     return Card(
@@ -397,7 +397,7 @@ class _InternshipCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    internshipItem.student_name,
+                    internshipItem.studentName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: textTheme.titleMedium?.copyWith(
@@ -407,7 +407,7 @@ class _InternshipCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   _InfoLine(
                     icon: Icons.business_outlined,
-                    text: internshipItem.company_name,
+                    text: internshipItem.companyName,
                   ),
                   const SizedBox(height: 4),
                   _InfoLine(

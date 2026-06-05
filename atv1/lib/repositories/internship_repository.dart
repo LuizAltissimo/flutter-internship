@@ -2,43 +2,53 @@ import 'package:atv1/models/internship_model.dart';
 import 'package:atv1/database/app_database.dart';
 
 abstract class InternshipRepository {
-  Future<int> insert_internship(internship internship);
+  Future<int> insertInternship(Internship internship);
 
-  Future<List<internship>> get_internships();
+  Future<List<Internship>> getInternships();
 
-  Future<int> update_internship(internship internship);
+  Future<int> updateInternship(Internship internship);
 
-  Future<int> delete_internship(int id);
+  Future<int> deleteInternship(int id);
 }
 
-class internship_data_source implements InternshipRepository {
-  final app_database _database;
+class InternshipDataSource implements InternshipRepository {
+  final AppDatabase _database;
   static const String tableName = 'internships';
 
-  internship_data_source({app_database? database}) : _database = database ?? app_database.instance;
+  InternshipDataSource({AppDatabase? database})
+    : _database = database ?? AppDatabase.instance;
 
   @override
-  Future<int> insert_internship(internship internship) async {
+  Future<int> insertInternship(Internship internship) async {
     final db = await _database.database;
     return await db.insert(tableName, internship.toMap());
   }
 
   @override
-  Future<List<internship>> get_internships() async {
+  Future<List<Internship>> getInternships() async {
     final db = await _database.database;
     final List<Map<String, dynamic>> results = await db.query(tableName);
-    return results.map((row) => internship.fromMap(row)).toList();
+    return results.map((row) => Internship.fromMap(row)).toList();
   }
 
   @override
-  Future<int> update_internship(internship internship) async {
+  Future<int> updateInternship(Internship internship) async {
     final db = await _database.database;
-    return await db.update(tableName, internship.toMap(), where: 'internship_id = ?', whereArgs: [internship.internship_id]);
+    return await db.update(
+      tableName,
+      internship.toMap(),
+      where: 'internship_id = ?',
+      whereArgs: [internship.internshipId],
+    );
   }
 
   @override
-  Future<int> delete_internship(int id) async {
+  Future<int> deleteInternship(int id) async {
     final db = await _database.database;
-    return await db.delete(tableName, where: 'internship_id = ?', whereArgs: [id]);
+    return await db.delete(
+      tableName,
+      where: 'internship_id = ?',
+      whereArgs: [id],
+    );
   }
 }

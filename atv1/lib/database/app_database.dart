@@ -1,35 +1,34 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
-
-class app_database {
-  static final app_database instance = app_database._init();
+class AppDatabase {
+  static final AppDatabase instance = AppDatabase._init();
   static Database? _database;
-  app_database._init();
+  AppDatabase._init();
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDB('internships.db');
+    _database = await _initDb('internships.db');
     return _database!;
   }
 
-  Future<Database> _initDB(String filePath) async {
+  Future<Database> _initDb(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
     return await openDatabase(
       path,
       version: 1,
       onConfigure: _onConfigure,
-      onCreate: _createDB,
+      onCreate: _createDb,
       onUpgrade: _onUpgrade,
     );
   }
-  
+
   Future _onConfigure(Database db) async {
     await db.execute('PRAGMA foreign_keys = ON');
   }
 
-  Future _createDB(Database db, int version) async {
+  Future _createDb(Database db, int version) async {
     await db.execute('''
       CREATE TABLE internships (
         internship_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,19 +39,19 @@ class app_database {
       )
     ''');
   }
-  
+
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < newVersion) {
       await db.execute('DROP TABLE IF EXISTS internships');
-      await _createDB(db, newVersion);
+      await _createDb(db, newVersion);
     }
   }
-  
+
   Future<void> close() async {
     final db = _database;
     if (db != null) {
       db.close();
-      _database = null;    
+      _database = null;
     }
   }
 }

@@ -18,6 +18,7 @@ class AppDatabase {
     return await openDatabase(
       path,
       version: 3,
+      // IA: versao do banco incrementada para suportar as novas colunas de relacionamento
       onConfigure: _onConfigure,
       onCreate: _createDb,
       onUpgrade: _onUpgrade,
@@ -41,6 +42,7 @@ class AppDatabase {
         company_name TEXT NOT NULL,
         location TEXT NOT NULL,
         duration TEXT NOT NULL,
+        // IA: colunas adicionadas para referenciar o professor orientador do estagio
         advisor_professor_id INTEGER,
         advisor_professor_name TEXT,
         FOREIGN KEY(advisor_professor_id) REFERENCES advisor_professors(professor_id)
@@ -66,6 +68,7 @@ class AppDatabase {
     }
 
     if (oldVersion < 3) {
+      // IA: migracao para adicionar colunas de orientador a tabelas existentes
       await db.execute('ALTER TABLE internships ADD COLUMN advisor_professor_id INTEGER');
       await db.execute('ALTER TABLE internships ADD COLUMN advisor_professor_name TEXT');
     }

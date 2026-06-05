@@ -168,6 +168,7 @@ class _InternshipListPageState extends State<InternshipListPage> {
                 item.companyName.toLowerCase().contains(normalizedSearch) ||
                 item.location.toLowerCase().contains(normalizedSearch) ||
                 item.duration.toLowerCase().contains(normalizedSearch) ||
+                // IA: busca agora inclui o nome do orientador vinculado ao estagio
                 (item.advisorProfessorName?.toLowerCase().contains(normalizedSearch) ?? false);
           }).toList();
 
@@ -438,6 +439,7 @@ class _InternshipCard extends StatelessWidget {
                   if (internshipItem.advisorProfessorName != null &&
                       internshipItem.advisorProfessorName!.isNotEmpty) ...[
                     const SizedBox(height: 4),
+                    // IA: exibe o nome do professor orientador vinculado ao estagio na lista
                     _InfoLine(
                       icon: Icons.school_outlined,
                       text: internshipItem.advisorProfessorName!,

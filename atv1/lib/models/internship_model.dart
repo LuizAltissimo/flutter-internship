@@ -4,7 +4,9 @@ class Internship {
   final String companyName;
   final String location;
   final String duration;
+  // IA: campo adicionado para vincular o orientador ao estagio
   final int? advisorProfessorId;
+  // IA: campo adicionado para armazenar o nome do orientador para exibicao na lista
   final String? advisorProfessorName;
 
   Internship({
@@ -24,6 +26,7 @@ class Internship {
       'company_name': companyName,
       'location': location,
       'duration': duration,
+      // IA: campos de relacionamento adicionados ao map para persistencia no SQLite
       'advisor_professor_id': advisorProfessorId,
       'advisor_professor_name': advisorProfessorName,
     };
@@ -36,6 +39,7 @@ class Internship {
       companyName: map['company_name'],
       location: map['location'],
       duration: map['duration'],
+      // IA: leitura do campo de relacionamento do recorde do banco
       advisorProfessorId: map['advisor_professor_id'],
       advisorProfessorName: map['advisor_professor_name'],
     );

@@ -2,6 +2,7 @@ import 'package:atv1/controllers/advisor_professor_controller.dart';
 import 'package:atv1/controllers/internship_controller.dart';
 import 'package:atv1/models/advisor_professor_model.dart';
 import 'package:atv1/models/internship_model.dart';
+// IA: imports adicionados para buscar e exibir professores orientadores no formulario
 import 'package:flutter/material.dart';
 
 class InternshipFormPage extends StatefulWidget {
@@ -16,12 +17,14 @@ class InternshipFormPage extends StatefulWidget {
 class _InternshipFormPageState extends State<InternshipFormPage> {
   final _formKey = GlobalKey<FormState>();
   final _controller = SqlInternshipController();
+  // IA: controlador adicional para carregar professores orientadores
   final _professorController = SqlAdvisorProfessorController();
   final _studentNameController = TextEditingController();
   final _companyNameController = TextEditingController();
   final _locationController = TextEditingController();
   final _durationController = TextEditingController();
 
+  // IA: campos de estado para selecionar e armazenar o orientador vinculado
   int? _advisorProfessorId;
   String? _advisorProfessorName;
   final List<AdvisorProfessor> _professors = [];
@@ -44,10 +47,12 @@ class _InternshipFormPageState extends State<InternshipFormPage> {
       _advisorProfessorName = internshipToEdit.advisorProfessorName;
     }
 
+    // IA: carrega os professores disponíveis para ser possível selecionar o orientador
     _loadProfessors();
   }
 
   Future<void> _loadProfessors() async {
+    // IA: busca os professores do banco para popular o dropdown do formulario
     final professors = await _professorController.getProfessors();
     if (!mounted) return;
     setState(() {
@@ -87,6 +92,7 @@ class _InternshipFormPageState extends State<InternshipFormPage> {
       companyName: _companyNameController.text.trim(),
       location: _locationController.text.trim(),
       duration: _durationController.text.trim(),
+      // IA: vincula o estagio ao orientador selecionado antes de salvar
       advisorProfessorId: _advisorProfessorId,
       advisorProfessorName: _advisorProfessorName,
     );
@@ -166,6 +172,7 @@ class _InternshipFormPageState extends State<InternshipFormPage> {
                     icon: Icons.school_outlined,
                   ),
                   const SizedBox(height: 10),
+                  // IA: campo de selecao do orientador para vincular ao estagio
                   if (_isProfessorsLoading)
                     const SizedBox(
                       height: 64,

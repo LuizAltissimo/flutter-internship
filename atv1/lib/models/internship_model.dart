@@ -4,6 +4,8 @@ class Internship {
   final String companyName;
   final String location;
   final String duration;
+  final int? advisorProfessorId;
+  final String? advisorProfessorName;
 
   Internship({
     this.internshipId,
@@ -11,6 +13,8 @@ class Internship {
     required this.companyName,
     required this.location,
     required this.duration,
+    this.advisorProfessorId,
+    this.advisorProfessorName,
   });
 
   Map<String, dynamic> toMap() {
@@ -20,6 +24,8 @@ class Internship {
       'company_name': companyName,
       'location': location,
       'duration': duration,
+      'advisor_professor_id': advisorProfessorId,
+      'advisor_professor_name': advisorProfessorName,
     };
   }
 
@@ -30,6 +36,8 @@ class Internship {
       companyName: map['company_name'],
       location: map['location'],
       duration: map['duration'],
+      advisorProfessorId: map['advisor_professor_id'],
+      advisorProfessorName: map['advisor_professor_name'],
     );
   }
 
@@ -39,6 +47,8 @@ class Internship {
     String? companyName,
     String? location,
     String? duration,
+    int? advisorProfessorId,
+    String? advisorProfessorName,
   }) {
     return Internship(
       internshipId: internshipId ?? this.internshipId,
@@ -46,6 +56,9 @@ class Internship {
       companyName: companyName ?? this.companyName,
       location: location ?? this.location,
       duration: duration ?? this.duration,
+      advisorProfessorId: advisorProfessorId ?? this.advisorProfessorId,
+      advisorProfessorName:
+          advisorProfessorName ?? this.advisorProfessorName,
     );
   }
 }

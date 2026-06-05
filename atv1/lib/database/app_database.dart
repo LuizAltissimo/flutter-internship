@@ -17,7 +17,7 @@ class AppDatabase {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path,
-      version: 1,
+      version: 3,
       onConfigure: _onConfigure,
       onCreate: _createDb,
       onUpgrade: _onUpgrade,
@@ -29,28 +29,52 @@ class AppDatabase {
   }
 
   Future _createDb(Database db, int version) async {
+    await _createInternshipsTable(db);
+    await _createAdvisorProfessorsTable(db);
+  }
+
+  Future _createInternshipsTable(Database db) async {
     await db.execute('''
-      CREATE TABLE internships (
+      CREATE TABLE IF NOT EXISTS internships (
         internship_id INTEGER PRIMARY KEY AUTOINCREMENT,
         student_name TEXT NOT NULL,
         company_name TEXT NOT NULL,
         location TEXT NOT NULL,
-        duration TEXT NOT NULL
+        duration TEXT NOT NULL,
+        advisor_professor_id INTEGER,
+        advisor_professor_name TEXT,
+        FOREIGN KEY(advisor_professor_id) REFERENCES advisor_professors(professor_id)
+      )
+    ''');
+  }
+
+  Future _createAdvisorProfessorsTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS advisor_professors (
+        professor_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL,
+        department TEXT NOT NULL,
+        phone TEXT NOT NULL
       )
     ''');
   }
 
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < newVersion) {
-      await db.execute('DROP TABLE IF EXISTS internships');
-      await _createDb(db, newVersion);
+    if (oldVersion < 2) {
+      await _createAdvisorProfessorsTable(db);
+    }
+
+    if (oldVersion < 3) {
+      await db.execute('ALTER TABLE internships ADD COLUMN advisor_professor_id INTEGER');
+      await db.execute('ALTER TABLE internships ADD COLUMN advisor_professor_name TEXT');
     }
   }
 
   Future<void> close() async {
     final db = _database;
     if (db != null) {
-      db.close();
+      await db.close();
       _database = null;
     }
   }

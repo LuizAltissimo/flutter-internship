@@ -1,4 +1,6 @@
+import 'package:atv1/controllers/advisor_professor_controller.dart';
 import 'package:atv1/controllers/internship_controller.dart';
+import 'package:atv1/models/advisor_professor_model.dart';
 import 'package:atv1/models/internship_model.dart';
 import 'package:flutter/material.dart';
 
@@ -14,11 +16,16 @@ class InternshipFormPage extends StatefulWidget {
 class _InternshipFormPageState extends State<InternshipFormPage> {
   final _formKey = GlobalKey<FormState>();
   final _controller = SqlInternshipController();
+  final _professorController = SqlAdvisorProfessorController();
   final _studentNameController = TextEditingController();
   final _companyNameController = TextEditingController();
   final _locationController = TextEditingController();
   final _durationController = TextEditingController();
 
+  int? _advisorProfessorId;
+  String? _advisorProfessorName;
+  final List<AdvisorProfessor> _professors = [];
+  bool _isProfessorsLoading = true;
   bool _isSaving = false;
 
   bool get _isEditing => widget.internshipToEdit != null;
@@ -33,7 +40,21 @@ class _InternshipFormPageState extends State<InternshipFormPage> {
       _companyNameController.text = internshipToEdit.companyName;
       _locationController.text = internshipToEdit.location;
       _durationController.text = internshipToEdit.duration;
+      _advisorProfessorId = internshipToEdit.advisorProfessorId;
+      _advisorProfessorName = internshipToEdit.advisorProfessorName;
     }
+
+    _loadProfessors();
+  }
+
+  Future<void> _loadProfessors() async {
+    final professors = await _professorController.getProfessors();
+    if (!mounted) return;
+    setState(() {
+      _professors.clear();
+      _professors.addAll(professors);
+      _isProfessorsLoading = false;
+    });
   }
 
   @override
@@ -49,6 +70,15 @@ class _InternshipFormPageState extends State<InternshipFormPage> {
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) return;
 
+    if (_advisorProfessorId == null || _advisorProfessorName == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Selecione um professor orientador antes de salvar.'),
+        ),
+      );
+      return;
+    }
+
     setState(() => _isSaving = true);
 
     final newInternship = Internship(
@@ -57,6 +87,8 @@ class _InternshipFormPageState extends State<InternshipFormPage> {
       companyName: _companyNameController.text.trim(),
       location: _locationController.text.trim(),
       duration: _durationController.text.trim(),
+      advisorProfessorId: _advisorProfessorId,
+      advisorProfessorName: _advisorProfessorName,
     );
 
     try {
@@ -128,6 +160,76 @@ class _InternshipFormPageState extends State<InternshipFormPage> {
                     textInputAction: TextInputAction.next,
                     validator: _requiredFieldValidator,
                   ),
+                  const SizedBox(height: 20),
+                  const _SectionTitle(
+                    title: 'Professor orientador',
+                    icon: Icons.school_outlined,
+                  ),
+                  const SizedBox(height: 10),
+                  if (_isProfessorsLoading)
+                    const SizedBox(
+                      height: 64,
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (_professors.isEmpty)
+                    Card(
+                      margin: EdgeInsets.zero,
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Nenhum professor cadastrado.',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Cadastre um professor orientador antes de vincular ao estagio.',
+                            ),
+                            const SizedBox(height: 12),
+                            FilledButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).pushNamed('/professors');
+                              },
+                              icon: const Icon(Icons.school_outlined),
+                              label: const Text('Ir para professores'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    DropdownButtonFormField<int>(
+                      initialValue: _advisorProfessorId,
+                      items: _professors
+                          .map(
+                            (professor) => DropdownMenuItem(
+                              value: professor.professorId,
+                              child: Text(professor.name),
+                            ),
+                          )
+                          .toList(),
+                      decoration: const InputDecoration(
+                        labelText: 'Orientador',
+                        prefixIcon: Icon(Icons.school_outlined),
+                      ),
+                      onChanged: (value) {
+                        final professor = _professors
+                            .firstWhere((item) => item.professorId == value);
+                        setState(() {
+                          _advisorProfessorId = professor.professorId;
+                          _advisorProfessorName = professor.name;
+                        });
+                      },
+                      validator: (value) {
+                        if (_professors.isEmpty) return null;
+                        if (value == null) {
+                          return 'Selecione um orientador';
+                        }
+                        return null;
+                      },
+                    ),
                   const SizedBox(height: 20),
                   const _SectionTitle(
                     title: 'Dados do estagio',

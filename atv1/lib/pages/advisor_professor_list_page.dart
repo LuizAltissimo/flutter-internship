@@ -1,20 +1,22 @@
-import 'package:atv1/controllers/internship_controller.dart';
-import 'package:atv1/models/internship_model.dart';
-import 'package:atv1/pages/internship_form_page.dart';
+import 'package:atv1/controllers/advisor_professor_controller.dart';
+import 'package:atv1/models/advisor_professor_model.dart';
+import 'package:atv1/pages/advisor_professor_form_page.dart';
 import 'package:atv1/widgets/app_drawer.dart';
 import 'package:flutter/material.dart';
 
-class InternshipListPage extends StatefulWidget {
-  const InternshipListPage({super.key});
+class AdvisorProfessorListPage extends StatefulWidget {
+  const AdvisorProfessorListPage({super.key});
 
   @override
-  State<InternshipListPage> createState() => _InternshipListPageState();
+  State<AdvisorProfessorListPage> createState() =>
+      _AdvisorProfessorListPageState();
 }
 
-class _InternshipListPageState extends State<InternshipListPage> {
-  final SqlInternshipController _controller = SqlInternshipController();
+class _AdvisorProfessorListPageState extends State<AdvisorProfessorListPage> {
+  final SqlAdvisorProfessorController _controller =
+      SqlAdvisorProfessorController();
   final TextEditingController _searchController = TextEditingController();
-  late Future<List<Internship>> _internshipsFuture;
+  late Future<List<AdvisorProfessor>> _professorsFuture;
   String _searchTerm = '';
 
   @override
@@ -23,7 +25,7 @@ class _InternshipListPageState extends State<InternshipListPage> {
     _searchController.addListener(() {
       setState(() => _searchTerm = _searchController.text.trim());
     });
-    _loadInternships();
+    _loadProfessors();
   }
 
   @override
@@ -32,32 +34,32 @@ class _InternshipListPageState extends State<InternshipListPage> {
     super.dispose();
   }
 
-  void _loadInternships() {
-    _internshipsFuture = _controller.getInternships();
+  void _loadProfessors() {
+    _professorsFuture = _controller.getProfessors();
   }
 
-  Future<void> _refreshInternships() async {
-    setState(_loadInternships);
-    await _internshipsFuture;
+  Future<void> _refreshProfessors() async {
+    setState(_loadProfessors);
+    await _professorsFuture;
   }
 
-  Future<void> _openForm({Internship? selectedInternship}) async {
+  Future<void> _openForm({AdvisorProfessor? selectedProfessor}) async {
     final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) =>
-            InternshipFormPage(internshipToEdit: selectedInternship),
+            AdvisorProfessorFormPage(professorToEdit: selectedProfessor),
       ),
     );
 
     if (saved == true && mounted) {
-      _refreshInternships();
+      _refreshProfessors();
     }
   }
 
-  Future<void> _confirmDelete(Internship selectedInternship) async {
-    final id = selectedInternship.internshipId;
+  Future<void> _confirmDelete(AdvisorProfessor selectedProfessor) async {
+    final id = selectedProfessor.professorId;
     if (id == null) {
-      _showMessage('Nao foi possivel excluir este estagio.');
+      _showMessage('Nao foi possivel excluir este professor.');
       return;
     }
 
@@ -68,9 +70,9 @@ class _InternshipListPageState extends State<InternshipListPage> {
 
         return AlertDialog(
           icon: Icon(Icons.delete_outline, color: colorScheme.error),
-          title: const Text('Excluir estagio?'),
+          title: const Text('Excluir professor?'),
           content: Text(
-            'O registro de ${selectedInternship.studentName} sera removido permanentemente.',
+            'O cadastro de ${selectedProfessor.name} sera removido permanentemente.',
           ),
           actions: [
             TextButton(
@@ -91,10 +93,10 @@ class _InternshipListPageState extends State<InternshipListPage> {
     );
 
     if (shouldDelete == true) {
-      await _controller.deleteInternship(id);
+      await _controller.deleteProfessor(id);
       if (!mounted) return;
-      _showMessage('Estagio excluido.');
-      _refreshInternships();
+      _showMessage('Professor excluido.');
+      _refreshProfessors();
     }
   }
 
@@ -104,84 +106,83 @@ class _InternshipListPageState extends State<InternshipListPage> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  void _closeDrawer() {
+  void _openInternships() {
     Navigator.of(context).pop();
+    Navigator.of(context).pushReplacementNamed('/internships');
   }
 
-  void _openProfessors() {
+  void _closeDrawer() {
     Navigator.of(context).pop();
-    Navigator.of(context).pushReplacementNamed('/professors');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: AppDrawer(
-        activeSection: AppSection.internships,
-        onInternshipsSelected: _closeDrawer,
-        onProfessorsSelected: _openProfessors,
+        activeSection: AppSection.professors,
+        onInternshipsSelected: _openInternships,
+        onProfessorsSelected: _closeDrawer,
       ),
       appBar: AppBar(
-        title: const Text('Estagios'),
+        title: const Text('Professores orientadores'),
         actions: [
           IconButton(
             tooltip: 'Atualizar',
-            onPressed: _refreshInternships,
+            onPressed: _refreshProfessors,
             icon: const Icon(Icons.refresh),
           ),
         ],
       ),
-      body: FutureBuilder<List<Internship>>(
-        future: _internshipsFuture,
+      body: FutureBuilder<List<AdvisorProfessor>>(
+        future: _professorsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
-            return _InternshipMessage(
+            return _ProfessorMessage(
               icon: Icons.error_outline,
-              title: 'Erro ao carregar estagios',
+              title: 'Erro ao carregar professores',
               message: snapshot.error.toString(),
               actionLabel: 'Tentar novamente',
-              onAction: _refreshInternships,
+              onAction: _refreshProfessors,
             );
           }
 
-          final internships = snapshot.data ?? [];
-          if (internships.isEmpty) {
-            return _InternshipMessage(
-              icon: Icons.work_outline,
-              title: 'Nenhum estagio cadastrado',
+          final professors = snapshot.data ?? [];
+          if (professors.isEmpty) {
+            return _ProfessorMessage(
+              icon: Icons.school_outlined,
+              title: 'Nenhum professor cadastrado',
               message:
-                  'Cadastre um estagio para acompanhar estudantes, empresas e duracao em um so lugar.',
-              actionLabel: 'Adicionar estagio',
+                  'Cadastre orientadores para organizar contatos e areas de acompanhamento dos estagios.',
+              actionLabel: 'Adicionar professor',
               onAction: () => _openForm(),
             );
           }
 
-          final visibleInternships = internships.where((item) {
+          final visibleProfessors = professors.where((item) {
             final normalizedSearch = _searchTerm.toLowerCase();
             if (normalizedSearch.isEmpty) return true;
 
-            return item.studentName.toLowerCase().contains(normalizedSearch) ||
-                item.companyName.toLowerCase().contains(normalizedSearch) ||
-                item.location.toLowerCase().contains(normalizedSearch) ||
-                item.duration.toLowerCase().contains(normalizedSearch) ||
-                (item.advisorProfessorName?.toLowerCase().contains(normalizedSearch) ?? false);
+            return item.name.toLowerCase().contains(normalizedSearch) ||
+                item.email.toLowerCase().contains(normalizedSearch) ||
+                item.department.toLowerCase().contains(normalizedSearch) ||
+                item.phone.toLowerCase().contains(normalizedSearch);
           }).toList();
 
           return RefreshIndicator(
-            onRefresh: _refreshInternships,
+            onRefresh: _refreshProfessors,
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
               children: [
-                _InternshipOverview(internships: internships),
+                _ProfessorOverview(professors: professors),
                 const SizedBox(height: 16),
                 TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
-                    hintText: 'Buscar por estudante, empresa ou local',
+                    hintText: 'Buscar por nome, e-mail ou area',
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: _searchTerm.isEmpty
                         ? null
@@ -193,22 +194,22 @@ class _InternshipListPageState extends State<InternshipListPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                if (visibleInternships.isEmpty)
-                  _InternshipMessage(
+                if (visibleProfessors.isEmpty)
+                  _ProfessorMessage(
                     icon: Icons.search_off_outlined,
                     title: 'Nenhum resultado encontrado',
                     message:
-                        'Revise o termo pesquisado para localizar o registro.',
+                        'Revise o termo pesquisado para localizar o cadastro.',
                     actionLabel: 'Limpar busca',
                     onAction: _searchController.clear,
                   )
                 else
-                  ...visibleInternships.map(
+                  ...visibleProfessors.map(
                     (item) => Padding(
                       padding: const EdgeInsets.only(bottom: 10),
-                      child: _InternshipCard(
-                        internshipItem: item,
-                        onEdit: () => _openForm(selectedInternship: item),
+                      child: _ProfessorCard(
+                        professorItem: item,
+                        onEdit: () => _openForm(selectedProfessor: item),
                         onDelete: () => _confirmDelete(item),
                       ),
                     ),
@@ -227,31 +228,32 @@ class _InternshipListPageState extends State<InternshipListPage> {
   }
 }
 
-class _InternshipOverview extends StatelessWidget {
-  final List<Internship> internships;
+class _ProfessorOverview extends StatelessWidget {
+  final List<AdvisorProfessor> professors;
 
-  const _InternshipOverview({required this.internships});
+  const _ProfessorOverview({required this.professors});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final companyCount = internships
-        .map((item) => item.companyName.trim())
-        .where((company) => company.isNotEmpty)
+    final departmentCount = professors
+        .map((item) => item.department.trim())
+        .where((department) => department.isNotEmpty)
         .toSet()
         .length;
-    final locationCount = internships
-        .map((item) => item.location.trim())
-        .where((location) => location.isNotEmpty)
-        .toSet()
+    final contactCount = professors
+        .where(
+          (item) =>
+              item.email.trim().isNotEmpty || item.phone.trim().isNotEmpty,
+        )
         .length;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: colorScheme.primary,
+        color: colorScheme.secondary,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -263,12 +265,12 @@ class _InternshipOverview extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: colorScheme.secondary,
+                  color: colorScheme.primary,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
-                  Icons.assignment_turned_in_outlined,
-                  color: colorScheme.onSecondary,
+                  Icons.school_outlined,
+                  color: colorScheme.onPrimary,
                 ),
               ),
               const SizedBox(width: 12),
@@ -277,17 +279,17 @@ class _InternshipOverview extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Controle de Estagios',
+                      'Orientadores de Estagio',
                       style: textTheme.titleLarge?.copyWith(
-                        color: colorScheme.onPrimary,
+                        color: colorScheme.onSecondary,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Visao geral dos registros cadastrados',
+                      'Professores disponiveis para acompanhamento',
                       style: textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onPrimary.withValues(alpha: 0.78),
+                        color: colorScheme.onSecondary.withValues(alpha: 0.78),
                       ),
                     ),
                   ],
@@ -300,22 +302,22 @@ class _InternshipOverview extends StatelessWidget {
             children: [
               Expanded(
                 child: _OverviewMetric(
-                  label: 'Estagios',
-                  value: internships.length.toString(),
+                  label: 'Professores',
+                  value: professors.length.toString(),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _OverviewMetric(
-                  label: 'Empresas',
-                  value: companyCount.toString(),
+                  label: 'Areas',
+                  value: departmentCount.toString(),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _OverviewMetric(
-                  label: 'Locais',
-                  value: locationCount.toString(),
+                  label: 'Contatos',
+                  value: contactCount.toString(),
                 ),
               ),
             ],
@@ -340,10 +342,10 @@ class _OverviewMetric extends StatelessWidget {
       constraints: const BoxConstraints(minHeight: 76),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: colorScheme.onPrimary.withValues(alpha: 0.12),
+        color: colorScheme.onSecondary.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: colorScheme.onPrimary.withValues(alpha: 0.18),
+          color: colorScheme.onSecondary.withValues(alpha: 0.18),
         ),
       ),
       child: Column(
@@ -353,7 +355,7 @@ class _OverviewMetric extends StatelessWidget {
           Text(
             value,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: colorScheme.onPrimary,
+              color: colorScheme.onSecondary,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -363,7 +365,7 @@ class _OverviewMetric extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: colorScheme.onPrimary.withValues(alpha: 0.76),
+              color: colorScheme.onSecondary.withValues(alpha: 0.76),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -373,13 +375,13 @@ class _OverviewMetric extends StatelessWidget {
   }
 }
 
-class _InternshipCard extends StatelessWidget {
-  final Internship internshipItem;
+class _ProfessorCard extends StatelessWidget {
+  final AdvisorProfessor professorItem;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
-  const _InternshipCard({
-    required this.internshipItem,
+  const _ProfessorCard({
+    required this.professorItem,
     required this.onEdit,
     required this.onDelete,
   });
@@ -388,8 +390,10 @@ class _InternshipCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final studentName = internshipItem.studentName.trim();
-    final initial = studentName.isEmpty ? '?' : studentName[0].toUpperCase();
+    final professorName = professorItem.name.trim();
+    final initial = professorName.isEmpty
+        ? '?'
+        : professorName[0].toUpperCase();
 
     return Card(
       margin: EdgeInsets.zero,
@@ -400,8 +404,8 @@ class _InternshipCard extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 22,
-              backgroundColor: colorScheme.secondaryContainer,
-              foregroundColor: colorScheme.onSecondaryContainer,
+              backgroundColor: colorScheme.primaryContainer,
+              foregroundColor: colorScheme.onPrimaryContainer,
               child: Text(
                 initial,
                 style: const TextStyle(fontWeight: FontWeight.w800),
@@ -413,7 +417,7 @@ class _InternshipCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    internshipItem.studentName,
+                    professorItem.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: textTheme.titleMedium?.copyWith(
@@ -422,27 +426,19 @@ class _InternshipCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   _InfoLine(
-                    icon: Icons.business_outlined,
-                    text: internshipItem.companyName,
+                    icon: Icons.mail_outline,
+                    text: professorItem.email,
                   ),
                   const SizedBox(height: 4),
                   _InfoLine(
-                    icon: Icons.location_on_outlined,
-                    text: internshipItem.location,
+                    icon: Icons.apartment_outlined,
+                    text: professorItem.department,
                   ),
                   const SizedBox(height: 4),
                   _InfoLine(
-                    icon: Icons.schedule_outlined,
-                    text: internshipItem.duration,
+                    icon: Icons.phone_outlined,
+                    text: professorItem.phone,
                   ),
-                  if (internshipItem.advisorProfessorName != null &&
-                      internshipItem.advisorProfessorName!.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    _InfoLine(
-                      icon: Icons.school_outlined,
-                      text: internshipItem.advisorProfessorName!,
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -498,14 +494,14 @@ class _InfoLine extends StatelessWidget {
   }
 }
 
-class _InternshipMessage extends StatelessWidget {
+class _ProfessorMessage extends StatelessWidget {
   final IconData icon;
   final String title;
   final String message;
   final String? actionLabel;
   final VoidCallback? onAction;
 
-  const _InternshipMessage({
+  const _ProfessorMessage({
     required this.icon,
     required this.title,
     required this.message,

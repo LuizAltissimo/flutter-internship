@@ -1,28 +1,28 @@
-# Controle de Estagios
+# Controle de Estágios
 
-Aplicativo Flutter para cadastro e acompanhamento de estagios. O projeto permite registrar estudantes, empresas, locais e duracoes, mantendo os dados salvos localmente em SQLite.
+Aplicativo Flutter para gerenciamento de estágios e cadastro de professores orientadores. O app permite registrar estágios, professores e relacionar estágios ao professor orientador, com dados persistidos localmente em SQLite.
 
-O app foi criado como um prototipo funcional com foco em CRUD, persistencia local e uma interface simples para consulta rapida dos registros.
+O projeto é organizado com um padrão simples de camadas: páginas, controladores, repositórios e banco de dados.
 
 ## Funcionalidades
 
-- Cadastrar novos estagios.
-- Listar todos os registros cadastrados.
-- Buscar por estudante, empresa, local ou duracao.
-- Visualizar um resumo com total de estagios, empresas e locais.
-- Editar informacoes de um estagio existente.
-- Excluir registros com confirmacao.
-- Atualizar a lista manualmente pelo botao de refresh ou pelo gesto de puxar para atualizar.
-- Validar campos obrigatorios antes de salvar.
-- Persistir dados no dispositivo usando SQLite.
+- Gerenciar estágios (CRUD)
+- Gerenciar professores orientadores (CRUD)
+- Relacionar estágio a professor orientador
+- Buscar estágios por estudante, empresa, local ou duração
+- Atualizar lista com botão de refresh ou pull-to-refresh
+- Excluir registros com confirmação
+- Validar campos obrigatórios antes de salvar
+- Persistir dados localmente em SQLite
+- Navegação entre seções via drawer
 
 ## Tecnologias utilizadas
 
 - Flutter
 - Dart
 - SQLite com `sqflite`
-- `path` para montagem do caminho do banco local
-- Material 3 para tema e componentes de interface
+- `path` para montar o caminho do banco de dados
+- Material 3 para tema e componentes
 
 ## Estrutura do projeto
 
@@ -31,49 +31,74 @@ atv1/
   lib/
     main.dart
     controllers/
+      advisor_professor_controller.dart
       internship_controller.dart
     database/
       app_database.dart
     models/
+      advisor_professor_model.dart
       internship_model.dart
     pages/
+      advisor_professor_form_page.dart
+      advisor_professor_list_page.dart
       internship_form_page.dart
       internship_list_page.dart
     repositories/
+      advisor_professor_repository.dart
       internship_repository.dart
+    widgets/
+      app_drawer.dart
 ```
 
-## Organizacao do codigo
+## Organização do código
 
-- `main.dart`: ponto de entrada do aplicativo, configuracao do tema e tela inicial.
-- `pages/internship_list_page.dart`: tela principal com listagem, busca, resumo, atualizacao, edicao e exclusao.
-- `pages/internship_form_page.dart`: formulario usado para cadastrar e editar estagios.
-- `models/internship_model.dart`: modelo de dados do estagio e conversao para `Map`.
-- `controllers/internship_controller.dart`: camada intermediaria entre interface e repositorio.
-- `repositories/internship_repository.dart`: contrato CRUD e implementacao de acesso aos dados.
-- `database/app_database.dart`: inicializacao do banco SQLite e criacao da tabela `internships`.
+- `main.dart`: ponto de entrada do app, configuração do tema e rotas.
+- `widgets/app_drawer.dart`: menu lateral para alternar entre estágios e professores.
+- `pages/internship_list_page.dart`: listagem e gerenciamento de estágios.
+- `pages/internship_form_page.dart`: formulário para cadastrar e editar estágios, com seleção de professor orientador.
+- `pages/advisor_professor_list_page.dart`: listagem e gerenciamento de professores orientadores.
+- `pages/advisor_professor_form_page.dart`: formulário para cadastrar e editar professores.
+- `models/internship_model.dart`: modelo de dados de estágio e conversão para/desde `Map`.
+- `models/advisor_professor_model.dart`: modelo de dados de professor orientador.
+- `controllers/internship_controller.dart`: camada de controle para operações de estágio.
+- `controllers/advisor_professor_controller.dart`: camada de controle para operações de professor.
+- `repositories/internship_repository.dart`: implementação de CRUD para estágios.
+- `repositories/advisor_professor_repository.dart`: implementação de CRUD para professores.
+- `database/app_database.dart`: inicialização do banco e criação das tabelas.
 
 ## Modelo de dados
 
-A tabela `internships` armazena os seguintes campos:
+Tabela `internships`:
 
-| Campo | Tipo | Descricao |
+| Campo | Tipo | Descrição |
 | --- | --- | --- |
-| `internship_id` | `INTEGER` | Identificador automatico do registro |
+| `internship_id` | `INTEGER` | Identificador automático |
 | `student_name` | `TEXT` | Nome do estudante |
 | `company_name` | `TEXT` | Nome da empresa |
-| `location` | `TEXT` | Localizacao do estagio |
-| `duration` | `TEXT` | Duracao do estagio |
+| `location` | `TEXT` | Local do estágio |
+| `duration` | `TEXT` | Duração do estágio |
+| `advisor_professor_id` | `INTEGER` | Referência ao orientador |
+| `advisor_professor_name` | `TEXT` | Nome do orientador |
+
+Tabela `advisor_professors`:
+
+| Campo | Tipo | Descrição |
+| --- | --- | --- |
+| `professor_id` | `INTEGER` | Identificador automático |
+| `name` | `TEXT` | Nome do professor |
+| `email` | `TEXT` | E-mail do professor |
+| `department` | `TEXT` | Departamento |
+| `phone` | `TEXT` | Telefone |
 
 ## Como executar
 
 Entre na pasta do app:
 
 ```powershell
-cd "c:\Util\App estagio\atv1"
+cd "\atv1"
 ```
 
-Instale as dependencias:
+Instale as dependências:
 
 ```powershell
 flutter pub get
@@ -85,7 +110,7 @@ Execute o aplicativo:
 flutter run
 ```
 
-Para escolher um dispositivo especifico:
+Para escolher um dispositivo específico:
 
 ```powershell
 flutter devices
@@ -94,28 +119,29 @@ flutter run -d <device-id>
 
 ## Fluxo de uso
 
-1. A tela inicial exibe os estagios cadastrados.
-2. O botao `Adicionar` abre o formulario de cadastro.
-3. Ao salvar, o registro e gravado no banco local e a lista e atualizada.
-4. Cada item da lista pode ser editado ou excluido.
-5. A busca filtra os registros pelo texto digitado.
+1. Use o drawer para alternar entre seções de estágios e professores orientadores.
+2. Na tela de estágios, visualize a lista de registros e o resumo.
+3. Toque em `Adicionar` para abrir o formulário de estágio.
+4. Selecione o professor orientador e preencha os campos obrigatórios.
+5. Salve para persistir no banco local e atualizar a lista.
+6. Edite ou exclua itens diretamente na listagem.
+7. Use a busca para filtrar por texto.
 
 ## Banco de dados
 
-O banco local se chama `internships.db`. Na primeira execucao, o app cria a tabela `internships` automaticamente com os campos definidos no modelo.
+O banco local se chama `internships.db` e é criado na primeira execução.
 
-A persistencia e local, portanto os dados ficam armazenados no dispositivo em que o app esta sendo executado.
+O banco mantém tabelas `internships` e `advisor_professors`, além de suporte a upgrade de esquema para relacionamentos entre estágios e professores.
 
-## Possiveis melhorias
+## Possíveis melhorias
 
-- Adicionar datas de inicio e fim do estagio.
-- Validar duracao e datas com regras mais especificas.
-- Criar filtros por empresa ou local.
-- Ordenar registros por estudante, empresa ou duracao.
-- Adicionar exportacao de dados.
-- Criar testes automatizados para modelo, repositorio e telas.
-- Ajustar nomes de classes para seguir a convencao Dart (`PascalCase` para classes).
+- Adicionar datas de início e fim do estágio.
+- Melhorar validações de duração e e-mail.
+- Criar filtros por empresa, local ou departamento.
+- Ordenar registros por campos específicos.
+- Implementar exportação/importação de dados.
+- Adicionar testes automatizados.
 
 ## Status
 
-Projeto em desenvolvimento, com CRUD funcional e persistencia local implementada.
+Em desenvolvimento, com CRUD funcional para estágios e professores orientadores, persistência local e navegação por seção implementados.

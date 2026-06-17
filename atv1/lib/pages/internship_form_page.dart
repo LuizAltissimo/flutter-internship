@@ -1,8 +1,10 @@
 import 'package:atv1/controllers/advisor_professor_controller.dart';
+import 'package:atv1/controllers/company_controller.dart';
 import 'package:atv1/controllers/internship_controller.dart';
 import 'package:atv1/models/advisor_professor_model.dart';
+import 'package:atv1/models/company_model.dart';
 import 'package:atv1/models/internship_model.dart';
-// IA: imports adicionados para buscar e exibir professores orientadores no formulario
+// IA: imports adicionados para buscar e exibir professores orientadores e empresas no formulario
 import 'package:flutter/material.dart';
 
 class InternshipFormPage extends StatefulWidget {
@@ -19,8 +21,9 @@ class _InternshipFormPageState extends State<InternshipFormPage> {
   final _controller = SqlInternshipController();
   // IA: controlador adicional para carregar professores orientadores
   final _professorController = SqlAdvisorProfessorController();
+  // IA: controlador adicional para carregar empresas
+  final _companyController = SqlCompanyController();
   final _studentNameController = TextEditingController();
-  final _companyNameController = TextEditingController();
   final _locationController = TextEditingController();
   final _durationController = TextEditingController();
 
@@ -29,6 +32,11 @@ class _InternshipFormPageState extends State<InternshipFormPage> {
   String? _advisorProfessorName;
   final List<AdvisorProfessor> _professors = [];
   bool _isProfessorsLoading = true;
+  // IA: campos de estado para selecionar e armazenar a empresa vinculada
+  int? _companyId;
+  String? _companyName;
+  final List<Company> _companies = [];
+  bool _isCompaniesLoading = true;
   bool _isSaving = false;
 
   bool get _isEditing => widget.internshipToEdit != null;
@@ -40,15 +48,19 @@ class _InternshipFormPageState extends State<InternshipFormPage> {
     final internshipToEdit = widget.internshipToEdit;
     if (internshipToEdit != null) {
       _studentNameController.text = internshipToEdit.studentName;
-      _companyNameController.text = internshipToEdit.companyName;
       _locationController.text = internshipToEdit.location;
       _durationController.text = internshipToEdit.duration;
       _advisorProfessorId = internshipToEdit.advisorProfessorId;
       _advisorProfessorName = internshipToEdit.advisorProfessorName;
+      // IA: carrega os dados da empresa ao editar
+      _companyId = internshipToEdit.companyId;
+      _companyName = internshipToEdit.companyName;
     }
 
     // IA: carrega os professores disponíveis para ser possível selecionar o orientador
     _loadProfessors();
+    // IA: carrega as empresas disponíveis para ser possível selecionar a empresa
+    _loadCompanies();
   }
 
   Future<void> _loadProfessors() async {
@@ -62,10 +74,20 @@ class _InternshipFormPageState extends State<InternshipFormPage> {
     });
   }
 
+  Future<void> _loadCompanies() async {
+    // IA: busca as empresas do banco para popular o dropdown do formulario
+    final companies = await _companyController.getCompanies();
+    if (!mounted) return;
+    setState(() {
+      _companies.clear();
+      _companies.addAll(companies);
+      _isCompaniesLoading = false;
+    });
+  }
+
   @override
   void dispose() {
     _studentNameController.dispose();
-    _companyNameController.dispose();
     _locationController.dispose();
     _durationController.dispose();
     super.dispose();
@@ -84,12 +106,20 @@ class _InternshipFormPageState extends State<InternshipFormPage> {
       return;
     }
 
+    if (_companyId == null || _companyName == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Selecione uma empresa antes de salvar.')),
+      );
+      return;
+    }
+
     setState(() => _isSaving = true);
 
     final newInternship = Internship(
       internshipId: widget.internshipToEdit?.internshipId,
       studentName: _studentNameController.text.trim(),
-      companyName: _companyNameController.text.trim(),
+      companyId: _companyId,
+      companyName: _companyName!,
       location: _locationController.text.trim(),
       duration: _durationController.text.trim(),
       // IA: vincula o estagio ao orientador selecionado antes de salvar
@@ -222,8 +252,9 @@ class _InternshipFormPageState extends State<InternshipFormPage> {
                         prefixIcon: Icon(Icons.school_outlined),
                       ),
                       onChanged: (value) {
-                        final professor = _professors
-                            .firstWhere((item) => item.professorId == value);
+                        final professor = _professors.firstWhere(
+                          (item) => item.professorId == value,
+                        );
                         setState(() {
                           _advisorProfessorId = professor.professorId;
                           _advisorProfessorName = professor.name;
@@ -239,20 +270,82 @@ class _InternshipFormPageState extends State<InternshipFormPage> {
                     ),
                   const SizedBox(height: 20),
                   const _SectionTitle(
+                    title: 'Empresa concedente',
+                    icon: Icons.business_outlined,
+                  ),
+                  const SizedBox(height: 10),
+                  // IA: campo de selecao da empresa para vincular ao estagio
+                  if (_isCompaniesLoading)
+                    const SizedBox(
+                      height: 64,
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (_companies.isEmpty)
+                    Card(
+                      margin: EdgeInsets.zero,
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Nenhuma empresa cadastrada.',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Cadastre uma empresa antes de vincular ao estagio.',
+                            ),
+                            const SizedBox(height: 12),
+                            FilledButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).pushNamed('/companies');
+                              },
+                              icon: const Icon(Icons.business_outlined),
+                              label: const Text('Ir para empresas'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    DropdownButtonFormField<int?>(
+                      initialValue: _companyId,
+                      items: _companies
+                          .map(
+                            (company) => DropdownMenuItem(
+                              value: company.companyId,
+                              child: Text(company.name),
+                            ),
+                          )
+                          .toList(),
+                      decoration: const InputDecoration(
+                        labelText: 'Empresa',
+                        prefixIcon: Icon(Icons.business_outlined),
+                      ),
+                      onChanged: (value) {
+                        final company = _companies.firstWhere(
+                          (item) => item.companyId == value,
+                        );
+                        setState(() {
+                          _companyId = company.companyId;
+                          _companyName = company.name;
+                        });
+                      },
+                      validator: (value) {
+                        if (_companies.isEmpty) return null;
+                        if (value == null) {
+                          return 'Selecione uma empresa';
+                        }
+                        return null;
+                      },
+                    ),
+                  const SizedBox(height: 20),
+                  const _SectionTitle(
                     title: 'Dados do estagio',
                     icon: Icons.work_outline,
                   ),
                   const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _companyNameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Empresa',
-                      prefixIcon: Icon(Icons.business_outlined),
-                    ),
-                    textCapitalization: TextCapitalization.words,
-                    textInputAction: TextInputAction.next,
-                    validator: _requiredFieldValidator,
-                  ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _locationController,

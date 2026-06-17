@@ -115,6 +115,11 @@ class _AdvisorProfessorListPageState extends State<AdvisorProfessorListPage> {
     Navigator.of(context).pop();
   }
 
+  void _openCompanies() {
+    Navigator.of(context).pop();
+    Navigator.of(context).pushReplacementNamed('/companies');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -122,6 +127,7 @@ class _AdvisorProfessorListPageState extends State<AdvisorProfessorListPage> {
         activeSection: AppSection.professors,
         onInternshipsSelected: _openInternships,
         onProfessorsSelected: _closeDrawer,
+        onCompaniesSelected: _openCompanies,
       ),
       appBar: AppBar(
         title: const Text('Professores orientadores'),

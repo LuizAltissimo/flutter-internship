@@ -113,6 +113,11 @@ class _InternshipListPageState extends State<InternshipListPage> {
     Navigator.of(context).pushReplacementNamed('/professors');
   }
 
+  void _openCompanies() {
+    Navigator.of(context).pop();
+    Navigator.of(context).pushReplacementNamed('/companies');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -120,6 +125,7 @@ class _InternshipListPageState extends State<InternshipListPage> {
         activeSection: AppSection.internships,
         onInternshipsSelected: _closeDrawer,
         onProfessorsSelected: _openProfessors,
+        onCompaniesSelected: _openCompanies,
       ),
       appBar: AppBar(
         title: const Text('Estagios'),
@@ -169,7 +175,10 @@ class _InternshipListPageState extends State<InternshipListPage> {
                 item.location.toLowerCase().contains(normalizedSearch) ||
                 item.duration.toLowerCase().contains(normalizedSearch) ||
                 // IA: busca agora inclui o nome do orientador vinculado ao estagio
-                (item.advisorProfessorName?.toLowerCase().contains(normalizedSearch) ?? false);
+                (item.advisorProfessorName?.toLowerCase().contains(
+                      normalizedSearch,
+                    ) ??
+                    false);
           }).toList();
 
           return RefreshIndicator(

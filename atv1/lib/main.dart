@@ -1,4 +1,5 @@
 import 'package:atv1/pages/advisor_professor_list_page.dart';
+import 'package:atv1/pages/company_list_page.dart';
 import 'package:atv1/pages/internship_list_page.dart';
 import 'package:flutter/material.dart';
 
@@ -131,6 +132,7 @@ class InternshipApp extends StatelessWidget {
       routes: {
         '/internships': (_) => const InternshipListPage(),
         '/professors': (_) => const AdvisorProfessorListPage(),
+        '/companies': (_) => const CompanyListPage(),
       },
     );
   }

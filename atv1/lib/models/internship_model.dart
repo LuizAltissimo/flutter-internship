@@ -1,6 +1,7 @@
 class Internship {
   final int? internshipId;
   final String studentName;
+  final int? companyId;
   final String companyName;
   final String location;
   final String duration;
@@ -12,6 +13,7 @@ class Internship {
   Internship({
     this.internshipId,
     required this.studentName,
+    this.companyId,
     required this.companyName,
     required this.location,
     required this.duration,
@@ -23,6 +25,7 @@ class Internship {
     return {
       'internship_id': internshipId,
       'student_name': studentName,
+      'company_id': companyId,
       'company_name': companyName,
       'location': location,
       'duration': duration,
@@ -36,6 +39,7 @@ class Internship {
     return Internship(
       internshipId: map['internship_id'],
       studentName: map['student_name'],
+      companyId: map['company_id'],
       companyName: map['company_name'],
       location: map['location'],
       duration: map['duration'],
@@ -48,6 +52,7 @@ class Internship {
   Internship copyWith({
     int? internshipId,
     String? studentName,
+    int? companyId,
     String? companyName,
     String? location,
     String? duration,
@@ -57,6 +62,7 @@ class Internship {
     return Internship(
       internshipId: internshipId ?? this.internshipId,
       studentName: studentName ?? this.studentName,
+      companyId: companyId ?? this.companyId,
       companyName: companyName ?? this.companyName,
       location: location ?? this.location,
       duration: duration ?? this.duration,

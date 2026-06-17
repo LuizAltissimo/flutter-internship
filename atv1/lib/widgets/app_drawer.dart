@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 
-enum AppSection { internships, professors }
+enum AppSection { internships, professors, companies }
 
 class AppDrawer extends StatelessWidget {
   final AppSection activeSection;
   final VoidCallback onInternshipsSelected;
   final VoidCallback onProfessorsSelected;
+  final VoidCallback onCompaniesSelected;
 
   const AppDrawer({
     super.key,
     required this.activeSection,
     required this.onInternshipsSelected,
     required this.onProfessorsSelected,
+    required this.onCompaniesSelected,
   });
 
   @override
@@ -64,6 +66,12 @@ class AppDrawer extends StatelessWidget {
               leading: const Icon(Icons.school_outlined),
               title: const Text('Professores orientadores'),
               onTap: onProfessorsSelected,
+            ),
+            ListTile(
+              selected: activeSection == AppSection.companies,
+              leading: const Icon(Icons.business_outlined),
+              title: const Text('Empresas concedentes'),
+              onTap: onCompaniesSelected,
             ),
           ],
         ),
